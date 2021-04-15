@@ -140,16 +140,16 @@ int main()
 
 
 
-	//p1.x = 200;
-	//p1.y = 0;
+	p1.x = 200;
+	p1.y = 0;
 
-	//p1.x = 300;
-	//p1.y = -100;
+	p1.x = 300;
+	p1.y = -100;
 
-	//n1 = getOtherPoint(p1, 400, 120);
-	//p2.x = 0;
-	//p2.y = 0;
-	//n2 = getOtherPoint(p2, 400, 210);
+	n1 = getOtherPoint(p1, 400, 78);
+	p2.x = 0;
+	p2.y = 0;
+	n2 = getOtherPoint(p2, 400, 300);
 
 	double angleP = getTwoPositiveAngle(p1, p2);
 
@@ -200,30 +200,46 @@ int main()
 	line(n2.x - 8, 0, n2.x + 8, 0);							//画负号
 
 	angle1 = angleP;
-	angle2 =  angleP ;
+	angle2 = angleP + PI   ;
+	//angle2 =  angleP+PI+ 1* PI /LINE ;
+	double a = angleP / PI * 180;
+	
 
-	//double test3 = testPointNum(0,0, p1, p2, n1, n2);
+	//double test1 = testPointNum(-20, -300, p1, p2, n1, n2);
+	//double test2 = testPointNum(-10, -300, p1, p2, n1, n2);
+	//double test3 = testPointNum(0, -300, p1, p2, n1, n2);
+	//double test4 = testPointNum(10, -300, p1, p2, n1, n2);
 
-	//double test4 = testPointNum(10,0, p1, p2, n1, n2);
+	//double test5 = testPointNum(20, -300, p1, p2, n1, n2);
 
-	//double test2 = testPointNum(-10, 0, p1, p2, n1, n2);
-	//double test5 = testPointNum(20, 0, p1, p2, n1, n2);
 
-	//double test1 = testPointNum(-20, 0, p1, p2, n1, n2);
 
 	ofstream output;
 	output.open("number.txt");
-
+	bool flag = p1.x < p2.x;
 	for (int i = 0; i < LINE; i++)						//设置要画线的循环条件
 	{
+		
 		x1 = p1.x + 15 * cos(angle1);						//设置好出划画线点的出发位置
 		y1 = p1.y + 15 * sin(angle1);							//以半径为15的圆线圈为出发点
 		//x1 = 0, y1 = 0;
 		//testPointNum(x1, y1, p1, p2, n1, n2);
 		x3 = p2.x + 15 * cos(angle2);						//设置好出划画线点的出发位置
 		y3 = p2.y + 15 * sin(angle2);							//以半径为15的圆线圈为出发点
-
-
+ 
+		/*if (i == 0 || i == 19) {
+			if (flag)
+			{
+				angle1 += 2 * PI / LINE;
+				angle2 -= 2 * PI / LINE;
+			}
+			else
+			{
+				angle1 -= 2 * PI / LINE;
+				angle2 += 2 * PI / LINE;
+			}
+			continue;
+		}*/
 		for (int j = 0; j < NUM; j++)					//迭代次数
 		{
 			{
@@ -238,14 +254,18 @@ int main()
 				Ety = (n1.y - y1) / pow(rt2, 3) + (y1 - p1.y) / pow(rt1, 3)
 					+ (n2.y - y1) / pow(rt4, 3) + (y1 - p2.y) / pow(rt3, 3);//计算y轴方向的场强
 
-		/*		Etx = round(Etx, 20);
-				Ety = round(Ety, 20);*/
+				Etx = round(Etx, 20);
+				Ety = round(Ety, 20);
 
 				
 				Et = sqrt(pow(Etx, 2) + pow(Ety, 2));
-				xt0 = x1 + 10 * Etx / Et;							//计算更新之后p点的位置
-				yt0 = y1 + 10 * Ety / Et;							//计算更新之后p点的位置
-				line(x1, y1, xt0, yt0);					//连接两点
+				xt0 = x1 + 1 * Etx / Et;							//计算更新之后p点的位置
+				yt0 = y1 + 1 * Ety / Et;							//计算更新之后p点的位置
+				if (pow(x1 - p1.x, 2) + pow(y1 - p1.y, 2) > 15 * 15 && pow(x1 - p2.x, 2) + pow(y1 - p2.y, 2) > 15 * 15)
+				{
+					line(x1, y1, xt0, yt0);					//连接两点
+
+				}
 				x1 = xt0;								//更新x坐标
 				y1 = yt0;								//更新y坐标
 				output <<"Ex:"<<Etx<<"\t"<<"Ey:"<<Ety << "\t" <<"E:"<< Et << endl;
@@ -266,33 +286,35 @@ int main()
 				Ev = sqrt(pow(Evx, 2) + pow(Evy, 2));
 				xv0 = x3 + 1 * Evx / Ev;							//计算更新之后p点的位置
 				yv0 = y3 + 1 * Evy / Ev;							//计算更新之后p点的位置
-				line(x3, y3, xv0, yv0);					//连接两点
+
+				if (pow(x3 - p1.x, 2) + pow(y3 - p1.y, 2) > 15 * 15|| pow(x3 - p2.x, 2) + pow(y3 - p2.y, 2) > 15 * 15)
+				{
+					line(x3, y3, xv0, yv0);					//连接两点
+
+				}
+					 
+
 				x3 = xv0;								//更新x坐标
 				y3 = yv0;								//更新y坐标
 
 				
 
-				//两个相同电荷
-				//Etx = (x1-n1.x) / pow(rt2, 3) + (x1 - p1.x) / pow(rt1, 3);//计算x轴方向的场强
-				//Ety = (y1 - n1.y) / pow(rt2, 3) + (y1 - p1.y) / pow(rt1, 3);	//计算y轴方向的场强
-
-
-				//Et = sqrt(pow(Etx, 2) + pow(Ety, 2));		//计算横着两个总场强
-				//xt0 = x1 + 10 * Etx / Et;							//计算更新之后p点的位置
-				//yt0 = y1 + 10 * Ety / Et;							//计算更新之后p点的位置
-				//line(x1, y1, xt0, yt0);					//连接两点
-				//x1 = xt0;								//更新x坐标
-				//y1 = yt0;								//更新y坐标
-				//if (pow(x1 - n1.x, 2) + pow(y1 - n1.y, 2) <= 15 * 15)//防止画的线挡住我画的负电荷
-				//	break;
 
 			}
 
 
 		}
-		angle1 += 2 * PI / LINE;//改变画线点的位置
-		angle2 += 2 * PI / LINE;//改变画线点的位置
-		
+		if (flag)
+		{
+			angle1 += 2 * PI / LINE;
+			angle2 -= 2 * PI / LINE;
+		}
+		else
+		{
+			angle1 -= 2 * PI / LINE;
+			angle2 += 2 * PI / LINE;
+		}
+		 
 	}
 	output.close();
 	system("pause");
