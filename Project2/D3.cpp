@@ -9,7 +9,7 @@
 #include "math.h"
 #include <iostream>
 #include <iomanip>
-
+#include <vector> 
 #include <sstream>
 #include <fstream>
 using namespace std;
@@ -19,12 +19,12 @@ using namespace std;
 #define LINE 20			//设置划线数量
 #define NUM 3000		//迭代次数
 
-
+//
 struct Poly
 {
 	float x = 0;
 	float y = 0;
-	bool isP;
+	bool isZheng;
 };
 
 Poly  getOtherPoint(Poly pp, double Barlong, double angle)
@@ -92,16 +92,39 @@ double testPointNum(double x,double y,Poly p1, Poly p2,Poly n1,Poly n2)
 	return Et;
 }
 
+class Line
+{
+public:
+	Line();
+	~Line();
+
+private:
+
+};
+
+Line::Line()
+{
+}
+
+Line::~Line()
+{
+}
+
+
+
+
+Poly p1;//正极1
+Poly n1;//负极1
+Poly p2;//正极2
+Poly n2;//负极2
+
 int main()
 {
-	Poly p1;//正极1
-	Poly n1;//负极1
-	Poly p2;//正极2
-	Poly n2;//负极2
-	p1.isP = true;
-	n1.isP = false;
-	p2.isP = true;
-	n2.isP = false;
+	//Poly p1();//正极1
+	//Poly n1();//负极1
+	//Poly p2();//正极2
+	//Poly n2();//负极2
+
 
 	//p1.x = -200;
 	//p1.y = 200;
@@ -117,10 +140,10 @@ int main()
 	p1.y = 0;
 	n1.x = 200;
 	n1.y = 0;
-	p1.isP = true;
-	n1.isP = false;
-	p2.isP = true;
-	n2.isP = false;
+	p1.isZheng = true;
+	n1.isZheng = false;
+	p2.isZheng = true;
+	n2.isZheng = false;
 	p2.x = 0;
 	p2.y = 200;
 	n2.x = 0;
@@ -161,6 +184,20 @@ int main()
 	double x2, y2, Evx, Evy, Ev, xv0, yv0, rv1, rv2;
 	double rt3, rt4, rv3, rv4;
 	double x3, y3;
+	vector<double> linePointP1  ;
+	vector<double> linePointP2;
+	vector<double> linePointN1;
+	vector<double> linePointN2;
+	vector<Poly> polys;
+	 vector<double> distenceToP;
+
+
+	polys.push_back(p1);
+	polys.push_back(p2);
+	polys.push_back(n1);
+	polys.push_back(n2);
+	int r = 15;
+
 
 	initgraph(W, L);								//初始化屏幕
 	setbkcolor(WHITE);							//设置背景色
@@ -173,22 +210,27 @@ int main()
 	setlinestyle(PS_SOLID | PS_ENDCAP_FLAT, 2);	//设置线为实线，端点为平坦的
 	line(-400, 0, 400, 0);							//x轴
 
-	circle(p1.x, p1.y, 15);							//画半径为15的圆，把这个圆当做正电荷
-	setfillcolor(RED);							//设置填充颜色为红色
-	fillcircle(p1.x, p1.y, 15);						//填充正电荷
+	for (int i = 0; i < polys.size(); i++)
+	{
+		circle(p1.x, p1.y, r);							//画半径为15的圆，把这个圆当做正电荷
+		setfillcolor(RED);							//设置填充颜色为红色
+		fillcircle(p1.x, p1.y, r);						//填充正电荷
 
-	circle(n1.x, n1.y, 15);							//画半径为15的圆，把这个圆当做负电荷
-	setfillcolor(BLUE);							//设置填充颜色为蓝色
-	fillcircle(n1.x, n1.y, 15);						//填充负电荷
+		circle(n1.x, n1.y, r);							//画半径为15的圆，把这个圆当做负电荷
+		setfillcolor(BLUE);							//设置填充颜色为蓝色
+		fillcircle(n1.x, n1.y, r);						//填充负电荷
+	}
+
+	
 
 	//画第二对电荷
-	circle(p2.x, p2.y, 15);							//画半径为15的圆，把这个圆当做正电荷
+	circle(p2.x, p2.y, r);							//画半径为15的圆，把这个圆当做正电荷
 	setfillcolor(RGB(250, 128, 114));							//设置填充颜色为红色
-	fillcircle(p2.x, p2.y, 15);						//填充正电荷
+	fillcircle(p2.x, p2.y, r);						//填充正电荷
 
-	circle(n2.x, n2.y, 15);							//画半径为15的圆，把这个圆当做负电荷
+	circle(n2.x, n2.y, r);							//画半径为15的圆，把这个圆当做负电荷
 	setfillcolor(RGB(99, 184, 255));							//设置填充颜色为蓝色
-	fillcircle(n2.x, n2.y, 15);						//填充负电荷
+	fillcircle(n2.x, n2.y, r);						//填充负电荷
 
 
 
@@ -217,15 +259,27 @@ int main()
 	ofstream output;
 	output.open("number.txt");
 	bool flag = p1.x < p2.x;
+	int numPoly = polys.size();
+	int startPoint[100];
 	for (int i = 0; i < LINE; i++)						//设置要画线的循环条件
 	{
-		
+		//for (int pN = 0; pN < polys.size(); pN++)
+		//{
+		//	startPoint[pN] = polys.at(pN).x+r*cos(angle1);
+		//	startPoint[pN] = polys.at(pN).y + r * sin(angle1);
+		//}
 		x1 = p1.x + 15 * cos(angle1);						//设置好出划画线点的出发位置
 		y1 = p1.y + 15 * sin(angle1);							//以半径为15的圆线圈为出发点
-		//x1 = 0, y1 = 0;
-		//testPointNum(x1, y1, p1, p2, n1, n2);
+
 		x3 = p2.x + 15 * cos(angle2);						//设置好出划画线点的出发位置
 		y3 = p2.y + 15 * sin(angle2);							//以半径为15的圆线圈为出发点
+
+
+		x3 = p2.x + 15 * cos(angle2);						//设置好出划画线点的出发位置
+		y3 = p2.y + 15 * sin(angle2);
+
+		x3 = p2.x + 15 * cos(angle2);						//设置好出划画线点的出发位置
+		y3 = p2.y + 15 * sin(angle2);
  
 		/*if (i == 0 || i == 19) {
 			if (flag)
@@ -243,12 +297,30 @@ int main()
 		for (int j = 0; j < NUM; j++)					//迭代次数
 		{
 			{
+				//获取
+				//for (int rSize = 0; rSize < polys.size(); rSize++) {
+				//	distenceToP.at(rSize) ;
+				//	double distance = 0;
+				//	for (int pSize = 0; pSize < polys.size(); pSize++) {
+				//		distance = sqrt(pow(x1 - distenceToP.at(pSize).x, 2) + pow(y1 - p1.y, 2));
+				//	}
+				//	if (i == 0)
+				//	{
+				//		distenceToP.push_back(distance);
+
+				//	}
+				//	else {
+				//		distenceToP.at(rSize) = distance;
+				//	}
+				//}
+
+				//
 				rt1 = sqrt(pow(x1 - p1.x, 2) + pow(y1 - p1.y, 2));   //计算负(正???)电荷到p点位置的半径	
 				rt2 = sqrt(pow(x1 - n1.x, 2) + pow(y1 - n1.y, 2));   //计算正(负???)电荷到p点位置的半径
 				rt3 = sqrt(pow(x1 - p2.x, 2) + pow(y1 - p2.y, 2));   //计算负(正???)电荷到p点位置的半径	
 				rt4 = sqrt(pow(x1 - n2.x, 2) + pow(y1 - n2.y, 2));   //计算正(负???)电荷到p点位置的半径
 				//正电荷是-x，负电荷是x-
-				//一正一负
+				//一正一负 
 				Etx = (n1.x - x1) / pow(rt2, 3) + (x1 - p1.x) / pow(rt1, 3)
 					+ (n2.x - x1) / pow(rt4, 3) + (x1 - p2.x) / pow(rt3, 3);//计算x轴方向的场强
 				Ety = (n1.y - y1) / pow(rt2, 3) + (y1 - p1.y) / pow(rt1, 3)
@@ -261,6 +333,8 @@ int main()
 				Et = sqrt(pow(Etx, 2) + pow(Ety, 2));
 				xt0 = x1 + 1 * Etx / Et;							//计算更新之后p点的位置
 				yt0 = y1 + 1 * Ety / Et;							//计算更新之后p点的位置
+				linePointP1.push_back(x1);
+
 				if (pow(x1 - p1.x, 2) + pow(y1 - p1.y, 2) > 15 * 15 && pow(x1 - p2.x, 2) + pow(y1 - p2.y, 2) > 15 * 15)
 				{
 					line(x1, y1, xt0, yt0);					//连接两点
@@ -286,6 +360,7 @@ int main()
 				Ev = sqrt(pow(Evx, 2) + pow(Evy, 2));
 				xv0 = x3 + 1 * Evx / Ev;							//计算更新之后p点的位置
 				yv0 = y3 + 1 * Evy / Ev;							//计算更新之后p点的位置
+				linePointP1.push_back(x3);
 
 				if (pow(x3 - p1.x, 2) + pow(y3 - p1.y, 2) > 15 * 15|| pow(x3 - p2.x, 2) + pow(y3 - p2.y, 2) > 15 * 15)
 				{
