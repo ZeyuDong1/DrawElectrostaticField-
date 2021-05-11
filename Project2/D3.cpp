@@ -16,9 +16,10 @@ using namespace std;
 #define PI 3.1415926535
 #define W 800			//宏定义屏幕宽
 #define L 800			//宏定义屏幕长
-#define LINE 20			//设置划线数量
+#define LINE 60			//设置划线数量
 #define NUM 3000		//迭代次数
 
+#define LENTH 50
 
 
 class Point
@@ -203,13 +204,307 @@ double getAngle(double x, double y)
 //}
 
 
+double getDistance(double x1, double y1, double x2, double y2)
+{
+	return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
 
+}
 
+Point centerPoint(double x1, double y1, double x2, double y2)
+{
+	Point point;
+	point.x = (x1 + x2) / 2;
+	point.y = (y1 + y2) / 2;
+	return point;
+}
 
 Poly p1;//正极1
 Poly n1;//负极1
 Poly p2;//正极2
 Poly n2;//负极2
+
+
+
+vector<Poly> calculateLines(vector<Poly> polys,int lineNum)
+{
+	double angle1 = 0;
+	double angle2 = 0;
+	bool flag = true;
+	double r = 15;
+	{
+		for (int p = 0; p < polys.size(); p++) {
+			for (int i = 0; i < lineNum; i++)						//设置要画线的循环条件
+			{
+				Line aline;
+
+
+				if (polys.at(p).isZheng) {
+					if (flag) {
+						aline.startPoint.x = polys.at(p).x + r * cos(angle1);
+						aline.startPoint.y = polys.at(p).y + r * sin(angle1);
+						polys.at(p).lines.push_back(aline);
+						flag = -1 * flag;
+					}
+					else {
+						aline.startPoint.x = polys.at(p).x + r * cos(angle2);
+						aline.startPoint.y = polys.at(p).y + r * sin(angle2);
+						polys.at(p).lines.push_back(aline);
+						flag = -1 * flag;
+					}
+
+				}
+
+				else
+				{
+					continue;
+				}
+				//output<<"i\t"<<i<<"\t"<< polys.at(p).lines.at(i).startPoint.x<<"\t"<< polys.at(p).lines.at(i).startPoint.y  <<endl;
+				polys.at(p).lines.at(i).endPoint = polys.at(p).lines.at(i).startPoint;
+				Point point;
+				point = polys.at(p).lines.at(i).startPoint;
+
+				for (int j = 0; j < NUM; j++)					//迭代次数
+				{
+					{
+						polys.at(p).lines.at(i).endTarget = -1;
+
+						vector<double> distanceToP;
+						//output << "rt\t";
+						for (int pp = 0; pp < polys.size(); pp++) {
+							distanceToP.push_back(sqrt(pow(point.x - polys.at(pp).x, 2) + pow(point.y - polys.at(pp).y, 2)));
+							//output<< distanceToP.at(pp)<<"\t";
+						}
+						//output<<endl;
+
+						//rt1 = sqrt(pow(x1 - p1.x, 2) + pow(y1 - p1.y, 2));   //计算负(正???)电荷到p点位置的半径	
+						//rt2 = sqrt(pow(x1 - n1.x, 2) + pow(y1 - n1.y, 2));   //计算正(负???)电荷到p点位置的半径
+						//rt3 = sqrt(pow(x1 - p2.x, 2) + pow(y1 - p2.y, 2));   //计算负(正???)电荷到p点位置的半径	
+						//rt4 = sqrt(pow(x1 - n2.x, 2) + pow(y1 - n2.y, 2));   //计算正(负???)电荷到p点位置的半径
+						//正电荷是-x，负电荷是x-
+						//一正一负 
+						point.ex = 0;
+						point.ey = 0;
+						//output << "E\t";
+						for (int pp = 0; pp < polys.size(); pp++) {
+							if (polys.at(pp).isZheng) {
+								point.ex += (point.x - polys.at(pp).x) / pow(distanceToP.at(pp), 3);
+								point.ey += (point.y - polys.at(pp).y) / pow(distanceToP.at(pp), 3);
+								double xx = (point.x - polys.at(pp).x) / pow(distanceToP.at(pp), 3);
+								double yy = (point.y - polys.at(pp).y) / pow(distanceToP.at(pp), 3);
+
+							}
+							else
+							{
+								point.ex += (polys.at(pp).x - point.x) / pow(distanceToP.at(pp), 3);
+								point.ey += (polys.at(pp).y - point.y) / pow(distanceToP.at(pp), 3);
+								double xx = (polys.at(pp).x - point.x) / pow(distanceToP.at(pp), 3);
+								double yy = (polys.at(pp).y - point.y) / pow(distanceToP.at(pp), 3);
+
+							}
+
+						}
+						//Etx = (n1.x - x1) / pow(rt2, 3) + (x1 - p1.x) / pow(rt1, 3)
+						//	+ (n2.x - x1) / pow(rt4, 3) + (x1 - p2.x) / pow(rt3, 3);//计算x轴方向的场强
+						//Ety = (n1.y - y1) / pow(rt2, 3) + (y1 - p1.y) / pow(rt1, 3)
+						//	+ (n2.y - y1) / pow(rt4, 3) + (y1 - p2.y) / pow(rt3, 3);//计算y轴方向的场强
+
+						point.ex = Point::round(point.ex, 20);
+						point.ey = Point::round(point.ey, 20);
+						if (point.x > 400 || point.y > 400 || point.x < -400 || point.y < -400) {
+							break;
+						}
+						point.e = sqrt(pow(point.ex, 2) + pow(point.ey, 2));
+
+						//output << point.ex << "\t" << point.ey << "\t" << point.e<<endl;
+
+
+						polys.at(p).lines.at(i).points.push_back(point);
+						point.x += point.ex / point.e;
+						point.y += point.ey / point.e;
+						if (point.x > 400 || point.y > 400 || point.x < -400 || point.y < -400) {
+							break;
+						}
+						bool isGetInTheNCircle = false; //是否进入了N极
+						for (int g = 0; g < polys.size(); g++) {
+							if (!polys.at(g).isZheng) {
+								if (pow(point.x - polys.at(g).x, 2) + pow(point.y - polys.at(g).y, 2) <= 15 * 15) {
+									isGetInTheNCircle = true;
+									polys.at(p).lines.at(i).endTarget = g;
+									break;
+								}
+							}
+						}
+
+
+						if (isGetInTheNCircle) {
+							polys.at(p).lines.at(i).endPoint = point;
+							break;
+						}
+
+
+
+						distanceToP.empty();
+					}
+
+
+				}
+
+				angle1 += 2 * PI / lineNum;
+				angle2 += 2 * PI / lineNum;
+			}
+
+		}
+
+		return polys;
+
+
+
+	}
+}
+
+
+vector<Poly> calculateLines2(vector<Poly> polys, int lineNum,int firstGap, int lastGap)
+{
+	double angle1 = 0;
+	double angle2 = 0;
+	bool flag = true;
+	double r = 15;
+	{
+		for (int p = 0; p < polys.size(); p++) {
+			for (int i = 0; i < lineNum; i++)						//设置要画线的循环条件
+			{
+				if (i > firstGap && i < lastGap)
+				{
+					break;
+				}
+				Line aline;
+
+
+				if (polys.at(p).isZheng) {
+					if (flag) {
+						aline.startPoint.x = polys.at(p).x + r * cos(angle1);
+						aline.startPoint.y = polys.at(p).y + r * sin(angle1);
+						polys.at(p).lines.push_back(aline);
+						flag = -1 * flag;
+					}
+					else {
+						aline.startPoint.x = polys.at(p).x + r * cos(angle2);
+						aline.startPoint.y = polys.at(p).y + r * sin(angle2);
+						polys.at(p).lines.push_back(aline);
+						flag = -1 * flag;
+					}
+
+				}
+
+				else
+				{
+					continue;
+				}
+				//output<<"i\t"<<i<<"\t"<< polys.at(p).lines.at(i).startPoint.x<<"\t"<< polys.at(p).lines.at(i).startPoint.y  <<endl;
+				polys.at(p).lines.at(i).endPoint = polys.at(p).lines.at(i).startPoint;
+				Point point;
+				point = polys.at(p).lines.at(i).startPoint;
+
+				for (int j = 0; j < NUM; j++)					//迭代次数
+				{
+					{
+						polys.at(p).lines.at(i).endTarget = -1;
+
+						vector<double> distanceToP;
+						//output << "rt\t";
+						for (int pp = 0; pp < polys.size(); pp++) {
+							distanceToP.push_back(sqrt(pow(point.x - polys.at(pp).x, 2) + pow(point.y - polys.at(pp).y, 2)));
+							//output<< distanceToP.at(pp)<<"\t";
+						}
+						//output<<endl;
+
+						//rt1 = sqrt(pow(x1 - p1.x, 2) + pow(y1 - p1.y, 2));   //计算负(正???)电荷到p点位置的半径	
+						//rt2 = sqrt(pow(x1 - n1.x, 2) + pow(y1 - n1.y, 2));   //计算正(负???)电荷到p点位置的半径
+						//rt3 = sqrt(pow(x1 - p2.x, 2) + pow(y1 - p2.y, 2));   //计算负(正???)电荷到p点位置的半径	
+						//rt4 = sqrt(pow(x1 - n2.x, 2) + pow(y1 - n2.y, 2));   //计算正(负???)电荷到p点位置的半径
+						//正电荷是-x，负电荷是x-
+						//一正一负 
+						point.ex = 0;
+						point.ey = 0;
+						//output << "E\t";
+						for (int pp = 0; pp < polys.size(); pp++) {
+							if (polys.at(pp).isZheng) {
+								point.ex += (point.x - polys.at(pp).x) / pow(distanceToP.at(pp), 3);
+								point.ey += (point.y - polys.at(pp).y) / pow(distanceToP.at(pp), 3);
+								double xx = (point.x - polys.at(pp).x) / pow(distanceToP.at(pp), 3);
+								double yy = (point.y - polys.at(pp).y) / pow(distanceToP.at(pp), 3);
+
+							}
+							else
+							{
+								point.ex += (polys.at(pp).x - point.x) / pow(distanceToP.at(pp), 3);
+								point.ey += (polys.at(pp).y - point.y) / pow(distanceToP.at(pp), 3);
+								double xx = (polys.at(pp).x - point.x) / pow(distanceToP.at(pp), 3);
+								double yy = (polys.at(pp).y - point.y) / pow(distanceToP.at(pp), 3);
+
+							}
+
+						}
+						//Etx = (n1.x - x1) / pow(rt2, 3) + (x1 - p1.x) / pow(rt1, 3)
+						//	+ (n2.x - x1) / pow(rt4, 3) + (x1 - p2.x) / pow(rt3, 3);//计算x轴方向的场强
+						//Ety = (n1.y - y1) / pow(rt2, 3) + (y1 - p1.y) / pow(rt1, 3)
+						//	+ (n2.y - y1) / pow(rt4, 3) + (y1 - p2.y) / pow(rt3, 3);//计算y轴方向的场强
+
+						point.ex = Point::round(point.ex, 20);
+						point.ey = Point::round(point.ey, 20);
+						if (point.x > 400 || point.y > 400 || point.x < -400 || point.y < -400) {
+							break;
+						}
+						point.e = sqrt(pow(point.ex, 2) + pow(point.ey, 2));
+
+						//output << point.ex << "\t" << point.ey << "\t" << point.e<<endl;
+
+
+						polys.at(p).lines.at(i).points.push_back(point);
+						point.x += point.ex / point.e;
+						point.y += point.ey / point.e;
+						if (point.x > 400 || point.y > 400 || point.x < -400 || point.y < -400) {
+							break;
+						}
+						bool isGetInTheNCircle = false; //是否进入了N极
+						for (int g = 0; g < polys.size(); g++) {
+							if (!polys.at(g).isZheng) {
+								if (pow(point.x - polys.at(g).x, 2) + pow(point.y - polys.at(g).y, 2) <= 15 * 15) {
+									isGetInTheNCircle = true;
+									polys.at(p).lines.at(i).endTarget = g;
+									break;
+								}
+							}
+						}
+
+
+						if (isGetInTheNCircle) {
+							polys.at(p).lines.at(i).endPoint = point;
+							break;
+						}
+
+
+
+						distanceToP.empty();
+					}
+
+
+				}
+
+				angle1 += 2 * PI / lineNum;
+				angle2 += 2 * PI / lineNum;
+			}
+
+		}
+
+		return polys;
+
+
+
+	}
+}
+
+
 
 int main()
 {
@@ -246,13 +541,22 @@ int main()
 
 	p1.x = -200;
 	p1.y = -200;
-	n1.x = -200;
-	n1.y = 200;
-	p2.x = 200;
-	p2.y = -200;
+	n1.x = 200;
+	n1.y = -200;
+	p2.x = -200;
+	p2.y = 200;
 	n2.x = 200;
 	n2.y = 200;
 
+
+	p1.x = -100;
+	p1.y = -100;
+	n1.x = 100;
+	n1.y = -100;
+	p2.x = -100;
+	p2.y = 100;
+	n2.x = 100;
+	n2.y = 100;
 
 
 
@@ -335,11 +639,11 @@ int main()
 	line(p2.x, -8, p2.x, 8);						//画正号
 	line(n2.x - 8, 0, n2.x + 8, 0);							//画负号
 
-	angle1 = angleP;
-	angle2 = angleP + PI;
-	//angle2 =  angleP+PI+ 1* PI /LINE ;
-	double a = angleP / PI * 180;
-
+	//angle1 = angleP;
+	//angle2 = angleP + PI;
+	////angle2 =  angleP+PI+ 1* PI /LINE ;
+	//double a = angleP / PI * 180;
+	angle2 = 0;
 
 	//double test1 = testPointNum(-20, -300, p1, p2, n1, n2);
 	//double test2 = testPointNum(-10, -300, p1, p2, n1, n2);
@@ -355,161 +659,160 @@ int main()
 	//bool flag = p1.x < p2.x;
 	int numPoly = polys.size();
 	bool flag = true;
+
+
+
 #define kuan 800
 #define gao 800
 	{
 		{
-			for (int p = 0; p < polys.size(); p++) {
-				for (int i = 0; i < LINE; i++)						//设置要画线的循环条件
-				{
-					Line aline;
+			polys.clear();
+			polys.push_back(p1);
+			polys.push_back(n1);
+			polys = calculateLines(polys,40);
 
 
-					if (polys.at(p).isZheng) {
-						if (flag) {
-							aline.startPoint.x = polys.at(p).x + r * cos(angle1);
-							aline.startPoint.y = polys.at(p).y + r * sin(angle1);
-							polys.at(p).lines.push_back(aline);
-							flag = -1 * flag;
-						}
-						else {
-							aline.startPoint.x = polys.at(p).x + r * cos(angle2);
-							aline.startPoint.y = polys.at(p).y + r * sin(angle2);
-							polys.at(p).lines.push_back(aline);
-							flag = -1 * flag;
-						}
+			vector<Poly> polysDown;
+			polysDown.push_back(p2);
+			polysDown.push_back(n2);
+			polysDown = calculateLines(polysDown,20);
 
+
+
+			vector<Poly> polysCenter;
+			p1.x = -100;
+			p1.y = 0;
+			n1.x = 100;
+			n1.y = 0;
+			polysCenter.push_back(p1);
+			polysCenter.push_back(n1);
+			polysCenter = calculateLines(polysCenter,40);
+
+			vector<Poly> polysMid;
+			p1.x = -100;
+			p1.y = 0;
+			n1.x = 100;
+			n1.y = 0;
+			polysMid.push_back(p1);
+			polysMid.push_back(n1);
+			polysMid = calculateLines2(polysMid, 80,5,75);
+
+
+
+
+			int lineNum = 30;
+			
+	/*		
+			for (int j = 0; j < polys[0].lines.size(); j++) {
+				if (j > polys[0].lines.size() / 2) {
+					for (int i = 0; i < polys[0].lines.at(j).points.size(); i++) {
+						polys[0].lines.at(j).points.at(i).y -= 10;
 					}
-					
-					else
-					{
-						continue;
-					}
-					//output<<"i\t"<<i<<"\t"<< polys.at(p).lines.at(i).startPoint.x<<"\t"<< polys.at(p).lines.at(i).startPoint.y  <<endl;
-					polys.at(p).lines.at(i).endPoint = polys.at(p).lines.at(i).startPoint;
-					Point point;
-					point = polys.at(p).lines.at(i).startPoint;
-					
-					for (int j = 0; j < NUM; j++)					//迭代次数
-					{
-						{
-							polys.at(p).lines.at(i).endTarget = -1;
-
-							vector<double> distanceToP;
-							//output << "rt\t";
-							for (int pp = 0; pp < polys.size(); pp++) {
-								distanceToP.push_back(sqrt(pow(point.x - polys.at(pp).x, 2) + pow(point.y - polys.at(pp).y, 2)));
-								//output<< distanceToP.at(pp)<<"\t";
-							}
-							//output<<endl;
-
-							//rt1 = sqrt(pow(x1 - p1.x, 2) + pow(y1 - p1.y, 2));   //计算负(正???)电荷到p点位置的半径	
-							//rt2 = sqrt(pow(x1 - n1.x, 2) + pow(y1 - n1.y, 2));   //计算正(负???)电荷到p点位置的半径
-							//rt3 = sqrt(pow(x1 - p2.x, 2) + pow(y1 - p2.y, 2));   //计算负(正???)电荷到p点位置的半径	
-							//rt4 = sqrt(pow(x1 - n2.x, 2) + pow(y1 - n2.y, 2));   //计算正(负???)电荷到p点位置的半径
-							//正电荷是-x，负电荷是x-
-							//一正一负 
-							point.ex = 0;
-							point.ey = 0;
-							//output << "E\t";
-							for (int pp = 0; pp < polys.size(); pp++) {
-								if (polys.at(pp).isZheng) {
-									point.ex += (point.x - polys.at(pp).x) / pow(distanceToP.at(pp), 3);
-									point.ey += (point.y - polys.at(pp).y) / pow(distanceToP.at(pp), 3);
-									double xx = (point.x - polys.at(pp).x) / pow(distanceToP.at(pp), 3);
-									double yy = (point.y - polys.at(pp).y) / pow(distanceToP.at(pp), 3);
-
-								}
-								else
-								{
-									point.ex += (polys.at(pp).x - point.x) / pow(distanceToP.at(pp), 3);
-									point.ey += (polys.at(pp).y - point.y) / pow(distanceToP.at(pp), 3);
-									double xx = (polys.at(pp).x - point.x) / pow(distanceToP.at(pp), 3);
-									double yy = (polys.at(pp).y - point.y) / pow(distanceToP.at(pp), 3);
-
-								}
-							
-							}
-							//Etx = (n1.x - x1) / pow(rt2, 3) + (x1 - p1.x) / pow(rt1, 3)
-							//	+ (n2.x - x1) / pow(rt4, 3) + (x1 - p2.x) / pow(rt3, 3);//计算x轴方向的场强
-							//Ety = (n1.y - y1) / pow(rt2, 3) + (y1 - p1.y) / pow(rt1, 3)
-							//	+ (n2.y - y1) / pow(rt4, 3) + (y1 - p2.y) / pow(rt3, 3);//计算y轴方向的场强
-
-							point.ex = Point::round(point.ex, 20);
-							point.ey = Point::round(point.ey, 20);
-							if (point.x > 400 || point.y > 400 || point.x < -400 || point.y < -400) {
-								break;
-							}
-							point.e = sqrt(pow(point.ex, 2) + pow(point.ey, 2));
-
-							//output << point.ex << "\t" << point.ey << "\t" << point.e<<endl;
-
-
-							polys.at(p).lines.at(i).points.push_back(point);
-							point.x += point.ex / point.e;
-							point.y += point.ey / point.e;
-							if (point.x > 400 || point.y > 400 || point.x < -400 || point.y < -400) {
-								break;
-							}
-							bool isGetInTheNCircle = false;
-							for (int g = 0; g < polys.size() ; g++) {
-								if (!polys.at(g).isZheng) {
-									if (pow(point.x - polys.at(g).x, 2) + pow(point.y - polys.at(g).y, 2) <= 15 * 15) {
-										isGetInTheNCircle = true;
-										polys.at(p).lines.at(i).endTarget = g;
-										break;
-									}
-								}
-							}
-
-
-							if (isGetInTheNCircle) {
-								polys.at(p).lines.at(i).endPoint = point;
-								break;
-							}
-							//output<< "x\t"<<point.x<< "y\t" << point.y<<endl;
-							//xt0 = x1 + 1 * Etx / Et;							//计算更新之后p点的位置
-							//yt0 = y1 + 1 * Ety / Et;							//计算更新之后p点的位置
-							////linePointP1.push_back(x1);
-
-							//if (pow(x1 - n1.x, 2) + pow(y1 - n1.y, 2) > 15 * 15 && pow(x1 - n2.x, 2) + pow(y1 - n2.y, 2) > 15 * 15)
-							//{
-							//	line(x1, y1, xt0, yt0);					//连接两点
-
-							//}
-
-							//x1 = xt0;								//更新x坐标
-							//y1 = yt0;								//更新y坐标
-							//output << pow(x1 - p1.x, 2) + pow(y1 - p1.y, 2) << endl;
-
-
-
-							distanceToP.empty();
-						}
-
-
-					}
-
-					angle1 += 2 * PI / LINE;
-					angle2 += 2 * PI / LINE;
 				}
+				
+			}*/
 
+			vector<Line> oppositeLines;
+			
+			for (int p = 0; p < polys.size(); p++) {
+				for (int i = 0; i < polys.at(p).lines.size(); i++)						//设置要画线的循环条件
+				{
+						Line aline;
+						for (int j = 0; j < polys.at(p).lines.at(i).points.size() ; j++) {
+							
+							Point apoint;
+							apoint.x = -polys.at(p).lines.at(i).points.at(j).x;
+							apoint.y = polys.at(p).lines.at(i).points.at(j).y;
+						
+							aline.points.push_back(apoint);							
+
+						}
+						oppositeLines.push_back(aline);
+				}
 			}
 
-			
+
 			try
 			{
 				for (int p = 0; p < polys.size(); p++) {
 					for (int i = 0; i < polys.at(p).lines.size(); i++)						//设置要画线的循环条件
 					{
-						output <<"pi"<< p << " " << i << endl;
+						if(i> 24)
+							for (int j = 0; j < polys.at(p).lines.at(i).points.size() - 1; j++) {
+								{
+									if(polys.at(p).lines.at(i).points.at(j).x<0)
+									line(polys.at(p).lines.at(i).points.at(j).x, polys.at(p).lines.at(i).points.at(j).y, polys.at(p).lines.at(i).points.at(j + 1).x, polys.at(p).lines.at(i).points.at(j + 1).y);
+									if (oppositeLines.at(i).points.at(j).x > 0)
 
-						for (int j = 0; j < polys.at(p).lines.at(i).points.size() - 1; j++) {
-							polys.at(p).lines.at(i).points.at(j).x;
-							line(polys.at(p).lines.at(i).points.at(j).x, polys.at(p).lines.at(i).points.at(j).y, polys.at(p).lines.at(i).points.at(j + 1).x, polys.at(p).lines.at(i).points.at(j + 1).y);
-							output << j << endl;
 
+									line(oppositeLines.at(i).points.at(j).x, oppositeLines.at(i).points.at(j).y, oppositeLines.at(i).points.at(j + 1).x, oppositeLines.at(i).points.at(j + 1).y);
+								}
+							
+							}
+					}
+				}
+
+
+				for (int p = 0; p < polysDown.size(); p++) {
+					for (int i = 0; i < polysDown.at(p).lines.size(); i++)						//设置要画线的循环条件
+					{
+						if (i < 7)
+
+							for (int j = 0; j < polysDown.at(p).lines.at(i).points.size() - 1; j++) {
+							
+									line(polysDown.at(p).lines.at(i).points.at(j).x, polysDown.at(p).lines.at(i).points.at(j).y, polysDown.at(p).lines.at(i).points.at(j + 1).x, polysDown.at(p).lines.at(i).points.at(j + 1).y);
+														
+
+							}
+					}
+				}
+
+
+				for (int p = 0; p < polysCenter.size(); p++) {
+					int lineSize = polysCenter.at(p).lines.size();
+					for (int i = 0; i < lineSize; i++)						//设置要画线的循环条件
+					{
+						int pointSize = polysCenter.at(p).lines.at(i).points.size();
+						if((i>13&&i<25))
+						for (int j = 0; j < pointSize - 1; j++) {
+							if ((i > 13 && i < 25))
+							{
+								if (i > lineSize / 2) {
+									line(polysCenter.at(p).lines.at(i).points.at(j).x, polysCenter.at(p).lines.at(i).points.at(j).y - (i % 20) * 15, polysCenter.at(p).lines.at(i).points.at(j + 1).x, polysCenter.at(p).lines.at(i).points.at(j + 1).y - (i % 20) * 15);
+									line(-polysCenter.at(p).lines.at(i).points.at(j).x, polysCenter.at(p).lines.at(i).points.at(j).y - (i % 20) * 15, -polysCenter.at(p).lines.at(i).points.at(j + 1).x, polysCenter.at(p).lines.at(i).points.at(j + 1).y - (i % 20) * 15);
+
+								}
+								else
+								{
+									line(polysCenter.at(p).lines.at(i).points.at(j).x, polysCenter.at(p).lines.at(i).points.at(j).y + (20 - i) * 15, polysCenter.at(p).lines.at(i).points.at(j + 1).x, polysCenter.at(p).lines.at(i).points.at(j + 1).y + (20 - i) * 15);
+									line(-polysCenter.at(p).lines.at(i).points.at(j).x, polysCenter.at(p).lines.at(i).points.at(j).y + (20 - i) * 15, -polysCenter.at(p).lines.at(i).points.at(j + 1).x, polysCenter.at(p).lines.at(i).points.at(j + 1).y + (20 - i) * 15);
+
+								}
+							}
+							
 						}
+					}
+				}
+				for (int p = 0; p < polysMid.size(); p++) {
+					int lineSize = polysMid.at(p).lines.size();
+					for (int i = 0; i < lineSize; i++)						//设置要画线的循环条件
+					{
+						int pointSize = polysMid.at(p).lines.at(i).points.size();
+							for (int j = 0; j < pointSize - 1; j++) {
+				
+								{
+									/*if (i > lineSize / 2)*/ {
+										line(polysMid.at(p).lines.at(i).points.at(j).x, polysMid.at(p).lines.at(i).points.at(j).y - (80-i) * 15, polysMid.at(p).lines.at(i).points.at(j + 1).x, polysMid.at(p).lines.at(i).points.at(j + 1).y - (80 - i) * 15);
+
+									}
+									/*else
+									{
+										line(polysMid.at(p).lines.at(i).points.at(j).x, polysMid.at(p).lines.at(i).points.at(j).y + ( i) * 15, polysMid.at(p).lines.at(i).points.at(j + 1).x, polysMid.at(p).lines.at(i).points.at(j + 1).y + ( i) * 15);
+
+									}*/
+								}
+
+							}
 					}
 				}
 			}
@@ -543,6 +846,10 @@ int main()
 	ofstream output2;
 	output2.open("number2.txt");
 
+
+
+
+	
 	{
 		//{
 		//	for (int i = 0; i < LINE; i++)						//设置要画线的循环条件
@@ -586,10 +893,10 @@ int main()
 		//			 
 		//				//正电荷是-x，负电荷是x-
 		//				//一正一负 
-		//				Etx = (n1.x - x1) / pow(rt2, 3) + (x1 - p1.x) / pow(rt1, 3)
-		//					+ (n2.x - x1) / pow(rt4, 3) + (x1 - p2.x) / pow(rt3, 3);//计算x轴方向的场强
-		//				Ety = (n1.y - y1) / pow(rt2, 3) + (y1 - p1.y) / pow(rt1, 3)
-		//					+ (n2.y - y1) / pow(rt4, 3) + (y1 - p2.y) / pow(rt3, 3);//计算y轴方向的场强
+		//				Etx = (n1.x - x1) / pow(rt2, 3) + (x1 - p1.x) / pow(rt1, 3);
+		//					//+ (n2.x - x1) / pow(rt4, 3) + (x1 - p2.x) / pow(rt3, 3);//计算x轴方向的场强
+		//				Ety = (n1.y - y1) / pow(rt2, 3) + (y1 - p1.y) / pow(rt1, 3);
+		//					//+ (n2.y - y1) / pow(rt4, 3) + (y1 - p2.y) / pow(rt3, 3);//计算y轴方向的场强
 		//				
 		//				Etx = Point::round(Etx, 20);
 		//				Ety = Point::round(Ety, 20);
@@ -603,7 +910,7 @@ int main()
 
 		//				//linePointP1.push_back(x1);
 
-		//				if (pow(x1 - n1.x, 2) + pow(y1 - n1.y, 2) > 15 * 15 && pow(x1 - n2.x, 2) + pow(y1 - n2.y, 2) > 15 * 15)
+		//				//if (pow(x1 - n1.x, 2) + pow(y1 - n1.y, 2) > 15 * 15 && pow(x1 - n2.x, 2) + pow(y1 - n2.y, 2) > 15 * 15  )
 		//				{
 		//					line(x1, y1, xt0, yt0);					//连接两点
 
@@ -613,34 +920,34 @@ int main()
 		//				y1 = yt0;								//更新y坐标
 		//				//output << pow(x1 - p1.x, 2) + pow(y1 - p1.y, 2) << endl;
 
-		//				rv1 = sqrt(pow(x3 - p1.x, 2) + pow(y3 - p1.y, 2));   //计算负(正???)电荷到p点位置的半径	
-		//				rv2 = sqrt(pow(x3 - n1.x, 2) + pow(y3 - n1.y, 2));   //计算正(负???)电荷到p点位置的半径
-		//				rv3 = sqrt(pow(x3 - p2.x, 2) + pow(y3 - p2.y, 2));   //计算负(正???)电荷到p点位置的半径	
-		//				rv4 = sqrt(pow(x3 - n2.x, 2) + pow(y3 - n2.y, 2));   //计算正(负???)电荷到p点位置的半径
-		//				//正电荷是-x，负电荷是x-
-		//				//一正一负
-		//				Evx = (n1.x - x3) / pow(rv2, 3) + (x3 - p1.x) / pow(rv1, 3)
-		//					+ (n2.x - x3) / pow(rv4, 3) + (x3 - p2.x) / pow(rv3, 3);//计算x轴方向的场强
-		//				Evy = (n1.y - y3) / pow(rv2, 3) + (y3 - p1.y) / pow(rv1, 3)
-		//					+ (n2.y - y3) / pow(rv4, 3) + (y3 - p2.y) / pow(rv3, 3);//计算y轴方向的场强
+		//				//rv1 = sqrt(pow(x3 - p1.x, 2) + pow(y3 - p1.y, 2));   //计算负(正???)电荷到p点位置的半径	
+		//				//rv2 = sqrt(pow(x3 - n1.x, 2) + pow(y3 - n1.y, 2));   //计算正(负???)电荷到p点位置的半径
+		//				//rv3 = sqrt(pow(x3 - p2.x, 2) + pow(y3 - p2.y, 2));   //计算负(正???)电荷到p点位置的半径	
+		//				//rv4 = sqrt(pow(x3 - n2.x, 2) + pow(y3 - n2.y, 2));   //计算正(负???)电荷到p点位置的半径
+		//				////正电荷是-x，负电荷是x-
+		//				////一正一负
+		//				//Evx = 
+		//				//	(n2.x - x3) / pow(rv4, 3) + (x3 - p2.x) / pow(rv3, 3);//计算x轴方向的场强
+		//				//	Evy = 
+		//				//	(n2.y - y3) / pow(rv4, 3) + (y3 - p2.y) / pow(rv3, 3);//计算y轴方向的场强
 
 
 
-		//				Ev = sqrt(pow(Evx, 2) + pow(Evy, 2));
-		//				xv0 = x3 + 1 * Evx / Ev;							//计算更新之后p点的位置
-		//				yv0 = y3 + 1 * Evy / Ev;							//计算更新之后p点的位置
-		//				//linePointP1.push_back(x3);
+		//				//Ev = sqrt(pow(Evx, 2) + pow(Evy, 2));
+		//				//xv0 = x3 + 1 * Evx / Ev;							//计算更新之后p点的位置
+		//				//yv0 = y3 + 1 * Evy / Ev;							//计算更新之后p点的位置
+		//				////linePointP1.push_back(x3);
 
-		//				if (pow(x3 - n1.x, 2) + pow(y3 - n1.y, 2) > 15 * 15 && pow(x3 - n2.x, 2) + pow(y3 - n2.y, 2) > 15 * 15)
-		//				{
-		//					//line(x3, y3, xv0, yv0);					//连接两点
+		//				//if (pow(x3 - n1.x, 2) + pow(y3 - n1.y, 2) > 15 * 15 && pow(x3 - n2.x, 2) + pow(y3 - n2.y, 2) > 15 * 15 && i < LINE / 2 && i!=0)
+		//				//{
+		//				//	line(x3, y3, xv0, yv0);					//连接两点
 
-		//				}
+		//				//}
 
 
 
-		//				x3 = xv0;								//更新x坐标
-		//				y3 = yv0;								//更新y坐标
+		//				//x3 = xv0;								//更新x坐标
+		//				//y3 = yv0;								//更新y坐标
 
 
 
@@ -649,17 +956,10 @@ int main()
 
 
 		//		}
-		//		if (flag)
-		//		{
+		//	
 		//			angle1 += 2 * PI / LINE;
-		//			angle2 -= 2 * PI / LINE;
-		//		}
-		//		else
-		//		{
-		//			angle1 -= 2 * PI / LINE;
 		//			angle2 += 2 * PI / LINE;
-		//		}
-
+		//	
 		//	}
 
 		//}
