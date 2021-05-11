@@ -373,14 +373,11 @@ vector<Poly> calculateLines2(vector<Poly> polys, int lineNum,int firstGap, int l
 		for (int p = 0; p < polys.size(); p++) {
 			for (int i = 0; i < lineNum; i++)						//设置要画线的循环条件
 			{
-				if (i > firstGap && i < lastGap)
-				{
-					break;
-				}
+				
 				Line aline;
 
 
-				if (polys.at(p).isZheng) {
+				if (polys.at(p).isZheng) {//正极绘制,负极绘制
 					if (flag) {
 						aline.startPoint.x = polys.at(p).x + r * cos(angle1);
 						aline.startPoint.y = polys.at(p).y + r * sin(angle1);
@@ -395,13 +392,18 @@ vector<Poly> calculateLines2(vector<Poly> polys, int lineNum,int firstGap, int l
 					}
 
 				}
-
 				else
 				{
 					continue;
 				}
+
+				
 				//output<<"i\t"<<i<<"\t"<< polys.at(p).lines.at(i).startPoint.x<<"\t"<< polys.at(p).lines.at(i).startPoint.y  <<endl;
 				polys.at(p).lines.at(i).endPoint = polys.at(p).lines.at(i).startPoint;
+				if (i > firstGap && i < lastGap)
+				{
+					continue;
+				}
 				Point point;
 				point = polys.at(p).lines.at(i).startPoint;
 
@@ -723,7 +725,6 @@ int main()
 							Point apoint;
 							apoint.x = -polys.at(p).lines.at(i).points.at(j).x;
 							apoint.y = polys.at(p).lines.at(i).points.at(j).y;
-						
 							aline.points.push_back(apoint);							
 
 						}
@@ -741,11 +742,9 @@ int main()
 							for (int j = 0; j < polys.at(p).lines.at(i).points.size() - 1; j++) {
 								{
 									if(polys.at(p).lines.at(i).points.at(j).x<0)
-									line(polys.at(p).lines.at(i).points.at(j).x, polys.at(p).lines.at(i).points.at(j).y, polys.at(p).lines.at(i).points.at(j + 1).x, polys.at(p).lines.at(i).points.at(j + 1).y);
+										line(polys.at(p).lines.at(i).points.at(j).x, polys.at(p).lines.at(i).points.at(j).y, polys.at(p).lines.at(i).points.at(j + 1).x, polys.at(p).lines.at(i).points.at(j + 1).y);
 									if (oppositeLines.at(i).points.at(j).x > 0)
-
-
-									line(oppositeLines.at(i).points.at(j).x, oppositeLines.at(i).points.at(j).y, oppositeLines.at(i).points.at(j + 1).x, oppositeLines.at(i).points.at(j + 1).y);
+										line(oppositeLines.at(i).points.at(j).x, oppositeLines.at(i).points.at(j).y, oppositeLines.at(i).points.at(j + 1).x, oppositeLines.at(i).points.at(j + 1).y);
 								}
 							
 							}
@@ -762,7 +761,6 @@ int main()
 							
 									line(polysDown.at(p).lines.at(i).points.at(j).x, polysDown.at(p).lines.at(i).points.at(j).y, polysDown.at(p).lines.at(i).points.at(j + 1).x, polysDown.at(p).lines.at(i).points.at(j + 1).y);
 														
-
 							}
 					}
 				}
@@ -799,10 +797,11 @@ int main()
 					{
 						int pointSize = polysMid.at(p).lines.at(i).points.size();
 							for (int j = 0; j < pointSize - 1; j++) {
-				
+								line(polysMid.at(p).lines.at(i).points.at(j).x, polysMid.at(p).lines.at(i).points.at(j).y, polysMid.at(p).lines.at(i).points.at(j + 1).x, polysMid.at(p).lines.at(i).points.at(j + 1).y);
+
 								{
 									/*if (i > lineSize / 2)*/ {
-										line(polysMid.at(p).lines.at(i).points.at(j).x, polysMid.at(p).lines.at(i).points.at(j).y - (80-i) * 15, polysMid.at(p).lines.at(i).points.at(j + 1).x, polysMid.at(p).lines.at(i).points.at(j + 1).y - (80 - i) * 15);
+										//line(polysMid.at(p).lines.at(i).points.at(j).x, polysMid.at(p).lines.at(i).points.at(j).y - (80-i) * 15, polysMid.at(p).lines.at(i).points.at(j + 1).x, polysMid.at(p).lines.at(i).points.at(j + 1).y - (80 - i) * 15);
 
 									}
 									/*else
