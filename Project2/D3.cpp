@@ -365,7 +365,7 @@ vector<Poly> calculateLines(vector<Poly> polys,int lineNum)
 }
 
 
-vector<Poly> calculateLines2(vector<Poly> polys, int lineNum,int firstGap, int lastGap)
+vector<Poly> calculateLines(vector<Poly> polys, int lineNum,int firstGap, int lastGap)
 {
 	double angle1 = 0;
 	double angle2 = 0;
@@ -539,6 +539,154 @@ vector<Line> getOval(double x0, double y0, double ratio, double b, int lineSum,i
 	return lines;
 }
 
+vector<Line> getOval2(double x0, double y0, double ratio, double b, int lineSum, int pointSum, double density)
+{
+	vector<Line> lines;
+	double angle = 0;
+	//int pointSum = 100;
+	Point apoint;
+	apoint.x = x0;
+	apoint.y = y0;
+	double a;
+
+	for (int j = 0; j < lineSum; j++)
+	{
+		Line aline;
+		a = sqrt(ratio) * b;
+		for (int i = 0; i < pointSum; i++)
+		{
+			apoint.x = a * cos(angle);
+			//apoint.y = b * sin(angle) + b  ;
+			apoint.y = b * sin(angle) + b + (2000 / b) - 85;
+			//apoint.y = b * sin(angle) + b +  - 85;
+
+			aline.points.push_back(apoint);
+			angle += 2 * PI / pointSum;
+		}
+		lines.push_back(aline);
+		if (j < 5)
+			b *= density;
+		else
+			b *= 1.5;
+
+	}
+
+	return lines;
+}
+
+vector<Line> getOval3(double x0, double y0, double ratio, double b, int lineSum, int pointSum, double density)
+{
+	vector<Line> lines;
+	double angle = 0;
+	//int pointSum = 100;
+	Point apoint;
+	apoint.x = x0;
+	apoint.y = y0;
+	double a;
+
+	for (int j = 0; j < lineSum; j++)
+	{
+		Line aline;
+		a = sqrt(ratio)* b;
+		for (int i = 0; i < pointSum; i++)
+		{
+			apoint.x = a * cos(angle);
+			//apoint.y = b * sin(angle) + b  ;
+			apoint.y = b * sin(angle)  + 135;
+			//apoint.y = b * sin(angle) + b +  - 85;
+
+			aline.points.push_back(apoint);
+			angle += 2 * PI / pointSum;
+		}
+		lines.push_back(aline);
+		b += 10;
+		ratio *= 1.3;
+	}
+
+	return lines;
+}
+
+
+double getCompDirection(double xCenter, double yCenter, double angleOfMag, double Kuan, double Gao, double x0, double y0,double oval_ratio)
+{
+	bool pointInTheTop;
+	//判断点在磁铁的哪一边
+	{
+		//移动该点，使其相当于处于以磁铁中心为原点的坐标系中
+		double x1 = x0 - xCenter;
+		double y1 = y0 - yCenter;
+		//该点与x轴的夹角
+		double angle = atan2(y1, x1);
+		//考虑磁铁旋转后，该点与磁铁中心线的夹角也改变
+		angle -= angleOfMag;
+		//如果夹角+-PI，那么是在线上,小于PI在上面，大于PI在下面
+		if (angle >= PI || angle== -PI)
+		{
+			pointInTheTop = true;
+		}
+		else
+		{
+			pointInTheTop = false;
+		}
+	}
+
+
+
+	if (pointInTheTop)
+	{
+		getCompDirectionTop(xCenter, yCenter, angleOfMag, Kuan, Gao, x0, y0);
+	}
+	else
+	{
+		getCompDirectionBotton(xCenter, yCenter, angleOfMag, x0, y0, oval_ratio);
+	}
+
+
+
+}
+
+double getCompDirectionTop(double xCenter, double yCenter, double angle, double Kuan, double Gao, double x0, double y0)
+{
+	Poly n;
+	Poly s;
+	n.x = xCenter + cos(angle)*Kuan;
+	n.y = yCenter + sin(angle) * Kuan;
+	n.isZheng = true;
+	s.x = xCenter - cos(angle) * Kuan;
+	s.y = yCenter - sin(angle) * Kuan;
+	s.isZheng = false;
+	double distanceToN = sqrt(pow(x0 - n.x,2) + pow(y0 - n.y,2));
+	double distanceToS = sqrt(pow(x0 - s.x, 2) + pow(y0 - s.y, 2));
+	double ex = (x0 - n.x) / pow(distanceToN, 3)+ (  s.x-x0) / pow(distanceToN, 3);
+	double ey = (y0 - n.y) / pow(distanceToN, 3) + (s.y - y0) / pow(distanceToN, 3);
+	double e=  sqrt(pow(ex, 2) + pow(ey, 2));
+	//double xNext = ex / e+y0;
+	//double yNext = ey / e + y0;
+	double directionAngle = atan2(ey, ex);
+	return directionAngle;
+
+}
+
+double getCompDirectionBotton(double Xcenter,double yCenter,double angleOfMag,double x0, double y0, double ratio)
+{
+	//计算该点其x方向距离中心的距离和y方向距离其中心的距离
+	x0 -= Xcenter;
+	y0 -= yCenter;
+	//计算长轴（或者短轴
+	double b = (x0 * x0 + ratio * y0 * y0) / 2 * ratio * y0;
+	double hx=0, hy=0;
+	//切线方形，并归一化
+	double lenth = ratio * ratio * (y0 - b) * (y0 - b);
+	hx =-ratio*(y0-b)/ lenth;
+	hy  = x0/lenth;
+	double angle = asin(hy);
+	
+	if (hx < 0)
+		angle = PI - angle;//此时的angle为不考虑蹄形磁铁的倾斜的角度
+	return angle+ angleOfMag;//加上倾斜的角度即为改点的切线角度
+}
+
+
 int main()
 {
 
@@ -579,76 +727,201 @@ int main()
 	output.open("number.txt");
 
 	{
+	
+
 		
-			
-			vector<Line> lines;
-			
-			lines = getOval(0, 0,0.8, 40, 10, 1000,1.5);//double x0, double y0, double ratio, double b, int lineSum,int pointSum,double density
+		
 
-			int lineSum = lines.size();
-			for (int j = 0; j < lineSum; j++) {
-				int pointSum = lines.at(j).points.size();
-				for (int i = 0; i < pointSum - 1; i++) {
-					if (lines.at(j).points.at(i).x<60 && lines.at(j).points.at(i).x>-60 && lines.at(j).points.at(i).y<100 && lines.at(j).points.at(i).y>-100)
-						//line(lines.at(j).points.at(i).x, lines.at(j).points.at(i).y-100, lines.at(j).points.at(i + 1).x, lines.at(j).points.at(i + 1).y - 100);
-						continue;
-					else
-						line(lines.at(j).points.at(i).x, lines.at(j).points.at(i).y, lines.at(j).points.at(i + 1).x, lines.at(j).points.at(i + 1).y);
+			//part1
+		{
+			//{
+			//	int lineSum = 0;
+			//	vector<Line> lines;
 
-				}
-				line(lines.at(j).points.at(0).x, lines.at(j).points.at(pointSum - 1).y, lines.at(j).points.at(pointSum - 1).x, lines.at(j).points.at(0).y);
-			}
- 			
-			vector<Line> linesOtherSide;
-			linesOtherSide = getOval(0, 0, 0.8, 40,12, 1000,1.2);
+			//	lines = getOval(0, 0, 0.8, 40, 10, 1000, 1.5);//double x0, double y0, double ratio, double b, int lineSum,int pointSum,double density
 
-			lineSum = linesOtherSide.size();
-			for (int j = 0; j < lineSum; j++) {
-				int pointSum = linesOtherSide.at(j).points.size();
-				for (int i = 0; i < pointSum - 1; i++) {
-					if (linesOtherSide.at(j).points.at(i).x<60 && linesOtherSide.at(j).points.at(i).x>-60 && linesOtherSide.at(j).points.at(i).y<100 && linesOtherSide.at(j).points.at(i).y>-100)
-						continue;
-					//line(linesOtherSide.at(j).points.at(i).x, linesOtherSide.at(j).points.at(i).y, linesOtherSide.at(j).points.at(i + 1).x, linesOtherSide.at(j).points.at(i + 1).y);
-					line(linesOtherSide.at(j).points.at(i).x, -linesOtherSide.at(j).points.at(i).y, linesOtherSide.at(j).points.at(i + 1).x, -linesOtherSide.at(j).points.at(i + 1).y);
+			//	lineSum = lines.size();
+			//	for (int j = 0; j < lineSum; j++) {
+			//		int pointSum = lines.at(j).points.size();
+			//		for (int i = 0; i < pointSum - 1; i++) {
+			//			if (lines.at(j).points.at(i).x<60 && lines.at(j).points.at(i).x>-60 && lines.at(j).points.at(i).y<100 && lines.at(j).points.at(i).y>-100)
+			//				//line(lines.at(j).points.at(i).x, lines.at(j).points.at(i).y-100, lines.at(j).points.at(i + 1).x, lines.at(j).points.at(i + 1).y - 100);
+			//				continue;
+			//			else
+			//				line(lines.at(j).points.at(i).x, lines.at(j).points.at(i).y, lines.at(j).points.at(i + 1).x, lines.at(j).points.at(i + 1).y);
 
-				}
-				line(linesOtherSide.at(j).points.at(0).x, -linesOtherSide.at(j).points.at(pointSum - 1).y, linesOtherSide.at(j).points.at(pointSum - 1).x, -linesOtherSide.at(j).points.at(0).y);
-			}
-
-
-			//vector<Line> lineCenter;
-			//lineCenter = getOval(0, 0, 10, 40, 5, 100, 1);//double x0, double y0, double ratio, double b, int lineSum,int pointSum,double density
-
-			//lineSum = lineCenter.size();
-			//for (int j = 0; j < lineSum; j++) {
-			//	int pointSum = lineCenter.at(j).points.size();
-			//	for (int i = 0; i < pointSum - 1; i++) {
-			//		
-			//		line(lineCenter.at(j).points.at(i).x, -lineCenter.at(j).points.at(i).y, lineCenter.at(j).points.at(i + 1).x, -lineCenter.at(j).points.at(i + 1).y);
-
+			//		}
+			//		line(lines.at(j).points.at(0).x, lines.at(j).points.at(pointSum - 1).y, lines.at(j).points.at(pointSum - 1).x, lines.at(j).points.at(0).y);
 			//	}
-			//	line(lineCenter.at(j).points.at(0).x, -lineCenter.at(j).points.at(pointSum - 1).y, lineCenter.at(j).points.at(pointSum - 1).x, -lineCenter.at(j).points.at(0).y);
+
+			//	vector<Line> linesOtherSide;
+			//	linesOtherSide = getOval(0, 0, 0.8, 40, 12, 1000, 1.2);
+
+			//	lineSum = linesOtherSide.size();
+			//	for (int j = 0; j < lineSum; j++) {
+			//		int pointSum = linesOtherSide.at(j).points.size();
+			//		for (int i = 0; i < pointSum - 1; i++) {
+			//			if (linesOtherSide.at(j).points.at(i).x<60 && linesOtherSide.at(j).points.at(i).x>-60 && linesOtherSide.at(j).points.at(i).y<100 && linesOtherSide.at(j).points.at(i).y>-100)
+			//				continue;
+			//			//line(linesOtherSide.at(j).points.at(i).x, linesOtherSide.at(j).points.at(i).y, linesOtherSide.at(j).points.at(i + 1).x, linesOtherSide.at(j).points.at(i + 1).y);
+			//			line(linesOtherSide.at(j).points.at(i).x, -linesOtherSide.at(j).points.at(i).y, linesOtherSide.at(j).points.at(i + 1).x, -linesOtherSide.at(j).points.at(i + 1).y);
+
+			//		}
+			//		line(linesOtherSide.at(j).points.at(0).x, -linesOtherSide.at(j).points.at(pointSum - 1).y, linesOtherSide.at(j).points.at(pointSum - 1).x, -linesOtherSide.at(j).points.at(0).y);
+			//	}
+
+
+			//	//lineSum = polys.at(0).lines.size();
+			//	//for (int i = 0; i < lineSum; i++)
+			//	//{
+			//	//	int pointSize = polys.at(0).lines.at(i).points.size();
+			//	//	for (int j = 0; j < pointSize-1; j++)
+			//	//	{
+			//	//		line(polys.at(0).lines.at(i).points.at(j).x, -polys.at(0).lines.at(i).points.at(j).y, polys.at(0).lines.at(i).points.at(j + 1).x, -polys.at(0).lines.at(i).points.at(j + 1).y);
+			//	//		line(-polys.at(0).lines.at(i).points.at(j).x, -polys.at(0).lines.at(i).points.at(j).y, -polys.at(0).lines.at(i).points.at(j + 1).x, -polys.at(0).lines.at(i).points.at(j + 1).y);
+
+			//	//	}
+			//	//}
+
+
+			//	//vector<Line> lineCenter;
+			//	//lineCenter = getOval(0, 0, 10, 40, 5, 100, 1);//double x0, double y0, double ratio, double b, int lineSum,int pointSum,double density
+
+			//	//lineSum = lineCenter.size();
+			//	//for (int j = 0; j < lineSum; j++) {
+			//	//	int pointSum = lineCenter.at(j).points.size();
+			//	//	for (int i = 0; i < pointSum - 1; i++) {
+
+			//	//		line(lineCenter.at(j).points.at(i).x, -lineCenter.at(j).points.at(i).y, lineCenter.at(j).points.at(i + 1).x, -lineCenter.at(j).points.at(i + 1).y);
+
+			//	//	}
+			//	//	line(lineCenter.at(j).points.at(0).x, -lineCenter.at(j).points.at(pointSum - 1).y, lineCenter.at(j).points.at(pointSum - 1).x, -lineCenter.at(j).points.at(0).y);
+			//	//}
+
+
+
+			//	//circle(0,100,60);							//画半径为15的圆，把这个圆当做负电荷
+			//	setfillcolor(RGB(99, 184, 255));							//设置填充颜色为蓝色
+			//	fillcircle(0, 40, 60);						//填充负电荷
+
+			//	setfillcolor(WHITE);							//设置填充颜色为蓝色
+			//	fillcircle(0, 40, 40);
+
+
+			//	rectangle(60, 40, -60, -100);
+			//	setfillcolor(RGB(99, 184, 255));							//设置填充颜色为蓝色
+			//	fillrectangle(60, 40, -60, -100);
+
+			//	rectangle(40, 40, -40, -100);
+			//	setfillcolor(WHITE);							//设置填充颜色为蓝色
+			//	fillrectangle(40, 40, -40, -100);
 			//}
+		}
+			
+			//part 2
+		{
+			{
+				vector<Poly> polys;
+				Poly n, s;
+				n.isZheng = true;
+				n.x = -45;
+				n.y = 85;
+				s.isZheng = false;
+				s.x = 45;
+				s.y = 85;
+				polys.push_back(n);
+				polys.push_back(s);
+				polys = calculateLines(polys, 40,0,20);
+
+
+		
+
+				int lineSum = 0;
 
 
 
-			////circle(0,100,60);							//画半径为15的圆，把这个圆当做负电荷
-			//setfillcolor(RGB(99, 184, 255));							//设置填充颜色为蓝色
-			//fillcircle(0, 40, 60);						//填充负电荷
 
-			//setfillcolor(WHITE);							//设置填充颜色为蓝色
-			//fillcircle(0, 40, 40);
+				vector<Line> lines;
+
+				lines = getOval3(0, 0, 0.4, 80, 10, 1000, 1.5);//double x0, double y0, double ratio, double b, int lineSum,int pointSum,double density
+
+				lineSum = lines.size();
+				for (int j = 0; j < lineSum; j++) {
+					int pointSum = lines.at(j).points.size();
+					for (int i = 0; i < pointSum - 1; i++) {
+						if (lines.at(j).points.at(i).x<60 && lines.at(j).points.at(i).x>-60 && lines.at(j).points.at(i).y<100 && lines.at(j).points.at(i).y>-100)
+							//line(lines.at(j).points.at(i).x, lines.at(j).points.at(i).y-100, lines.at(j).points.at(i + 1).x, lines.at(j).points.at(i + 1).y - 100);
+							continue;
+						else
+							line(lines.at(j).points.at(i).x, lines.at(j).points.at(i).y, lines.at(j).points.at(i + 1).x, lines.at(j).points.at(i + 1).y);
+
+					}
+					line(lines.at(j).points.at(0).x, lines.at(j).points.at(pointSum - 1).y, lines.at(j).points.at(pointSum - 1).x, lines.at(j).points.at(0).y);
+				}
+				
+				{
+					//显示效果最好的方法，但是不知道该怎么计算切线
+					// 				polys = calculateLines(polys, 40);
+				//lineSum = polys.at(0).lines.size();
+				//for (int i = 0; i < lineSum; i++)
+				//{
+				//	int pointSize = polys.at(0).lines.at(i).points.size();
+				//	for (int j = 0; j < pointSize - 1; j++)
+				//	{
+				//		if (i < lineSum / 2)
+				//		{
+				//			line(polys.at(0).lines.at(i).points.at(j).x, -polys.at(0).lines.at(i).points.at(j).y, polys.at(0).lines.at(i).points.at(j + 1).x, -polys.at(0).lines.at(i).points.at(j + 1).y);
+				//			line(-polys.at(0).lines.at(i).points.at(j).x, -polys.at(0).lines.at(i).points.at(j).y, -polys.at(0).lines.at(i).points.at(j + 1).x, -polys.at(0).lines.at(i).points.at(j + 1).y);
+				//		}
+				//		if (i > lineSum / 2 && i < lineSum / 4 * 3)
+				//		{
+				//			line(polys.at(0).lines.at(i).points.at(j).x, -polys.at(0).lines.at(i).points.at(j).y+(i-20)*10, polys.at(0).lines.at(i).points.at(j + 1).x, -polys.at(0).lines.at(i).points.at(j + 1).y + (i - 20) * 10);
+				//			line(-polys.at(0).lines.at(i).points.at(j).x, -polys.at(0).lines.at(i).points.at(j).y + (i - 20) * 10, -polys.at(0).lines.at(i).points.at(j + 1).x, -polys.at(0).lines.at(i).points.at(j + 1).y + (i - 20) * 10);
+				//		}
+				//		if (i > lineSum / 4 * 3)
+				//		{
+				//			line(polys.at(0).lines.at(i).points.at(j).x, -polys.at(0).lines.at(i).points.at(j).y + (lineSum / 4 * 3 - i) * 10+100, polys.at(0).lines.at(i).points.at(j + 1).x, -polys.at(0).lines.at(i).points.at(j + 1).y + (lineSum / 4 * 3 - i) * 10 + 100);
+				//			line(-polys.at(0).lines.at(i).points.at(j).x, -polys.at(0).lines.at(i).points.at(j).y + (lineSum / 4 * 3 - i) * 10 + 100, -polys.at(0).lines.at(i).points.at(j + 1).x, -polys.at(0).lines.at(i).points.at(j + 1).y + (lineSum / 4 * 3 - i) * 10 + 100);
+				//		}
+				//	}
+				//}
+				}
+				
+
+				lineSum = polys.at(0).lines.size();
+				for (int i = 0; i < lineSum; i++)
+				{
+					int pointSize = polys.at(0).lines.at(i).points.size();
+					for (int j = 0; j < pointSize - 1; j++)
+					{
+						line(polys.at(0).lines.at(i).points.at(j).x, -polys.at(0).lines.at(i).points.at(j).y, polys.at(0).lines.at(i).points.at(j + 1).x, -polys.at(0).lines.at(i).points.at(j + 1).y);
+						line(-polys.at(0).lines.at(i).points.at(j).x, -polys.at(0).lines.at(i).points.at(j).y, -polys.at(0).lines.at(i).points.at(j + 1).x, -polys.at(0).lines.at(i).points.at(j + 1).y);
+
+					}
+				}
 
 
-			//rectangle(60, 40, -60, -100);
-			//setfillcolor(RGB(99, 184, 255));							//设置填充颜色为蓝色
-			//fillrectangle(60, 40, -60, -100);
-
-			//rectangle(40, 40, -40, -100);
-			//setfillcolor(WHITE);							//设置填充颜色为蓝色
-			//fillrectangle(40, 40, -40, -100);
+					setfillcolor(RGB(99, 184, 255));							//设置填充颜色为蓝色
+				fillcircle(0, 40, 60);						//填充负电荷
 
 
+				rectangle(60, 40, -60, -100);
+				setfillcolor(RGB(99, 184, 255));							//设置填充颜色为蓝色
+				fillrectangle(60, 40, -60, -100);
+
+
+
+
+				setfillcolor(WHITE);							//设置填充颜色为蓝色
+				fillcircle(0, 40, 40);
+
+
+
+				rectangle(40, 40, -40, -100);
+				setfillcolor(WHITE);							//设置填充颜色为蓝色
+				fillrectangle(40, 40, -40, -100);
+			}
+		}
 	}
 
 
