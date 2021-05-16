@@ -607,43 +607,6 @@ vector<Line> getOval3(double x0, double y0, double ratio, double b, int lineSum,
 }
 
 
-double getCompDirection(double xCenter, double yCenter, double angleOfMag, double Kuan, double Gao, double x0, double y0,double oval_ratio)
-{
-	bool pointInTheTop;
-	//判断点在磁铁的哪一边
-	{
-		//移动该点，使其相当于处于以磁铁中心为原点的坐标系中
-		double x1 = x0 - xCenter;
-		double y1 = y0 - yCenter;
-		//该点与x轴的夹角
-		double angle = atan2(y1, x1);
-		//考虑磁铁旋转后，该点与磁铁中心线的夹角也改变
-		angle -= angleOfMag;
-		//如果夹角+-PI，那么是在线上,小于PI在上面，大于PI在下面
-		if (angle >= PI || angle== -PI)
-		{
-			pointInTheTop = true;
-		}
-		else
-		{
-			pointInTheTop = false;
-		}
-	}
-
-
-
-	if (pointInTheTop)
-	{
-		getCompDirectionTop(xCenter, yCenter, angleOfMag, Kuan, Gao, x0, y0);
-	}
-	else
-	{
-		getCompDirectionBotton(xCenter, yCenter, angleOfMag, x0, y0, oval_ratio);
-	}
-
-
-
-}
 
 double getCompDirectionTop(double xCenter, double yCenter, double angle, double Kuan, double Gao, double x0, double y0)
 {
@@ -657,8 +620,8 @@ double getCompDirectionTop(double xCenter, double yCenter, double angle, double 
 	s.isZheng = false;
 	double distanceToN = sqrt(pow(x0 - n.x,2) + pow(y0 - n.y,2));
 	double distanceToS = sqrt(pow(x0 - s.x, 2) + pow(y0 - s.y, 2));
-	double ex = (x0 - n.x) / pow(distanceToN, 3)+ (  s.x-x0) / pow(distanceToN, 3);
-	double ey = (y0 - n.y) / pow(distanceToN, 3) + (s.y - y0) / pow(distanceToN, 3);
+	double ex = (x0 - n.x) / pow(distanceToN, 3)+ (  s.x-x0) / pow(distanceToS, 3);
+	double ey = (y0 - n.y) / pow(distanceToN, 3) + (s.y - y0) / pow(distanceToS, 3);
 	double e=  sqrt(pow(ex, 2) + pow(ey, 2));
 	//double xNext = ex / e+y0;
 	//double yNext = ey / e + y0;
@@ -670,22 +633,76 @@ double getCompDirectionTop(double xCenter, double yCenter, double angle, double 
 double getCompDirectionBotton(double Xcenter,double yCenter,double angleOfMag,double x0, double y0, double ratio)
 {
 	//计算该点其x方向距离中心的距离和y方向距离其中心的距离
-	x0 -= Xcenter;
-	y0 -= yCenter;
+	x0 =x0- Xcenter;
+	y0 =y0- yCenter;
 	//计算长轴（或者短轴
-	double b = (x0 * x0 + ratio * y0 * y0) / 2 * ratio * y0;
+	bool mirror=false;
+	if (y0 < 0)
+	{
+		y0 = -y0;
+		mirror = true;
+	}
+
+	double b = (x0 * x0 + ratio * y0 * y0) / (2 * ratio * y0);
 	double hx=0, hy=0;
 	//切线方形，并归一化
-	double lenth = ratio * ratio * (y0 - b) * (y0 - b);
-	hx =-ratio*(y0-b)/ lenth;
+	double lenth = sqrt(ratio * ratio * (y0 - b) * (y0 - b)+(x0*x0));
+	hx =(-ratio*(y0-b))/ lenth;
 	hy  = x0/lenth;
 	double angle = asin(hy);
 	
 	if (hx < 0)
 		angle = PI - angle;//此时的angle为不考虑蹄形磁铁的倾斜的角度
+	if (mirror)
+		angle = -angle;
 	return angle+ angleOfMag;//加上倾斜的角度即为改点的切线角度
 }
+double getCompDirection(double xCenter, double yCenter, double angleOfMag, double Kuan, double Gao, double x0, double y0, double oval_ratio)
+{
+	bool pointInTheTop;
+	//判断点在磁铁的哪一边
+	{
+		//移动该点，使其相当于处于以磁铁中心为原点的坐标系中
+		double x1 = x0 - xCenter;
+		double y1 = y0 - yCenter;
+		//该点与x轴的夹角
+		double angle = atan2(y1, x1);
+		//考虑磁铁旋转后，该点与磁铁中心线的夹角也改变
+		angle -= angleOfMag;
+		//如果夹角+-PI，那么是在线上,小于PI在上面，大于PI在下面
+		if (angle <= 0 || angle == -PI || angle == PI)
+		{
+			pointInTheTop = true;
+		}
+		else
+		{
+			pointInTheTop = false;
+		}
+	}
 
+	double resultAngle;
+
+	if (pointInTheTop)
+	{
+		resultAngle= getCompDirectionTop(xCenter, yCenter, angleOfMag, Kuan, Gao, x0, y0);
+	}
+	else
+	{
+		resultAngle = getCompDirectionBotton(xCenter, yCenter, angleOfMag, x0, y0, oval_ratio);
+	}
+
+	return resultAngle;
+
+}
+
+void angleTest(double angle, double x0, double y0)
+{
+	fillcircle(x0, y0, 5);
+	double nextX, nextY;
+	nextX = x0 + 100 * cos(angle);
+	nextY = y0 + 100 * sin(angle);
+	line(x0, y0, nextX, nextY);
+}
 
 int main()
 {
@@ -843,7 +860,7 @@ int main()
 
 				vector<Line> lines;
 
-				lines = getOval3(0, 0, 0.4, 80, 10, 1000, 1.5);//double x0, double y0, double ratio, double b, int lineSum,int pointSum,double density
+				lines = getOval2(0, 0, 0.6, 80, 10, 1000, 1.5);//double x0, double y0, double ratio, double b, int lineSum,int pointSum,double density
 
 				lineSum = lines.size();
 				for (int j = 0; j < lineSum; j++) {
@@ -899,6 +916,12 @@ int main()
 
 					}
 				}
+
+				
+				angleTest(getCompDirectionTop(0,-85,0,60,100,100,-300), 100, -300);
+				angleTest(getCompDirection(0, -85, 0, 60, 100, 100, -300, 0.6), 100, -300);
+				//angleTest(getCompDirectionBotton(0, -85, 0, 200, 300,0.6), 200, 300);
+				//angleTest(getCompDirection(0, -85, 0, 60, 100, 200,  300, 0.6), 200, 300);
 
 
 					setfillcolor(RGB(99, 184, 255));							//设置填充颜色为蓝色
