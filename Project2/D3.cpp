@@ -415,12 +415,9 @@ vector<Poly> calculateLines(vector<Poly> polys, int lineNum,int firstGap, int la
 						polys.at(p).lines.at(i).endTarget = -1;
 
 						vector<double> distanceToP;
-						//output << "rt\t";
 						for (int pp = 0; pp < polys.size(); pp++) {
 							distanceToP.push_back(sqrt(pow(point.x - polys.at(pp).x, 2) + pow(point.y - polys.at(pp).y, 2)));
-							//output<< distanceToP.at(pp)<<"\t";
 						}
-						//output<<endl;
 
 						//rt1 = sqrt(pow(x1 - p1.x, 2) + pow(y1 - p1.y, 2));   //计算负(正???)电荷到p点位置的半径	
 						//rt2 = sqrt(pow(x1 - n1.x, 2) + pow(y1 - n1.y, 2));   //计算正(负???)电荷到p点位置的半径
@@ -430,7 +427,6 @@ vector<Poly> calculateLines(vector<Poly> polys, int lineNum,int firstGap, int la
 						//一正一负 
 						point.ex = 0;
 						point.ey = 0;
-						//output << "E\t";
 						for (int pp = 0; pp < polys.size(); pp++) {
 							if (polys.at(pp).isZheng) {
 								point.ex += (point.x - polys.at(pp).x) / pow(distanceToP.at(pp), 3);
